@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OECT Biosensor & GastroSense Tools</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #0e1420;
+            color: #c8d0e0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+        }
+        .page { max-width: 720px; width: 100%; }
+        h1 { font-size: 2em; color: #e8ecf4; margin-bottom: 6px; }
+        .sub { color: #6a7588; font-size: .95em; margin-bottom: 36px; }
+        .card {
+            display: block;
+            background: #151c2c;
+            border: 1px solid rgba(255,255,255,.06);
+            border-radius: 14px;
+            padding: 22px 26px;
+            margin-bottom: 14px;
+            text-decoration: none;
+            color: inherit;
+            transition: transform .15s, border-color .2s, box-shadow .2s;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255,255,255,.14);
+            box-shadow: 0 8px 24px rgba(0,0,0,.3);
+        }
+        .card h2 { font-size: 1.15em; color: #e8ecf4; margin-bottom: 6px; }
+        .card p { font-size: .88em; color: #6a7588; line-height: 1.5; }
+        .tag {
+            display: inline-block;
+            font-size: .7em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 3px 10px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+        .tag-green  { background: rgba(0,230,118,.12); color: #00e676; }
+        .tag-cyan   { background: rgba(38,198,218,.12); color: #26c6da; }
+        .tag-amber  { background: rgba(255,167,38,.12); color: #ffa726; }
+        .tag-purple { background: rgba(149,117,255,.12); color: #9575ff; }
+        .footer { text-align: center; margin-top: 30px; font-size: .75em; color: #3a4252; }
+    </style>
+</head>
+<body>
+<div class="page">
+    <h1>Biosensor Interactive Tools</h1>
+    <p class="sub">OECT sensor design calculators &amp; intragastric GI monitoring dashboard</p>
+
+    <a class="card" href="gastrosense-monitor.html">
+        <span class="tag tag-green">Live Dashboard</span>
+        <h2>GastroSense &mdash; Intragastric Monitor</h2>
+        <p>Real-time GI diagnostic dashboard sensing stomach contractility (mmHg, CPM), volatile organic compounds (H&#8322;, CH&#8324;, H&#8322;S, NH&#8323;), and intragastric gas pressure. Includes 6 clinical pathology scenarios with auto-generated clinical assessments.</p>
+    </a>
+
+    <a class="card" href="oect-biosensor-calculator.html">
+        <span class="tag tag-cyan">Interactive</span>
+        <h2>OECT Debye Screening &amp; Signal Calculator</h2>
+        <p>Animated visualization of receptor binding, Debye screening, and expected current shift (&#916;I&#7779;). Adjust ionic strength, target concentration, K&#7496;, charge, and receptor type.</p>
+    </a>
+
+    <a class="card" href="oect-biosensor-simulator.html">
+        <span class="tag tag-purple">Animated</span>
+        <h2>OECT Device Cross-Section Simulator</h2>
+        <p>Animated cross-section of an OECT device showing gate electrode, electrolyte ions, PEDOT:PSS channel dedoping, and biomarker binding dynamics with live metrics.</p>
+    </a>
+
+    <a class="card" href="debye-screening-curve.html">
+        <span class="tag tag-amber">Chart</span>
+        <h2>Debye Screening Decay Curve</h2>
+        <p>Exponential signal decay chart comparing nanobody (3 nm) vs antibody (12 nm) coupling efficiency across ionic strengths from 1 mM to 150 mM.</p>
+    </a>
+
+    <div class="footer">Built for BME coursework &mdash; educational demonstration tools</div>
+</div>
+</body>
+</html>

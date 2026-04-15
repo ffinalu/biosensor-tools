@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OECT Biosensor Simulator</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #e4e8ee;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            background: #eef1f5;
+            border-radius: 22px;
+            padding: 28px;
+            width: 100%;
+            max-width: 1040px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.13);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .title { font-size: 1.55em; font-weight: 700; color: #1a1a1a; }
+        .metrics { display: flex; gap: 30px; }
+        .metric { text-align: center; }
+        .metric .label {
+            font-size: 0.68em; font-weight: 700; color: #999;
+            letter-spacing: 1.1px; text-transform: uppercase;
+        }
+        .metric .value {
+            font-size: 1.3em; font-weight: 700; color: #1a1a1a;
+            font-family: 'SF Mono', Menlo, Consolas, monospace;
+            margin-top: 3px;
+        }
+        .viz-wrapper {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+        canvas { display: block; width: 100%; }
+        .controls {
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .control-label { font-size: 0.92em; color: #555; font-weight: 500; white-space: nowrap; }
+        .controls input[type="range"] {
+            flex: 1; cursor: pointer;
+            accent-color: #3b5fc4;
+            height: 7px;
+        }
+        .control-value {
+            background: white;
+            border: 1.5px solid #d0d4da;
+            border-radius: 8px;
+            padding: 6px 14px;
+            font-family: 'SF Mono', Menlo, Consolas, monospace;
+            font-weight: 700;
+            font-size: 1em;
+            min-width: 48px;
+            text-align: center;
+            color: #222;
+        }
+        @media (max-width: 600px) {
+            .header { flex-direction: column; }
+            .metrics { gap: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div class="title">OECT Biosensor Simulator</div>
+        <div class="metrics">
+            <div class="metric">
+                <div class="label">Gate Potential</div>
+                <div class="value" id="m-vg">0.60 V</div>
+            </div>
+            <div class="metric">
+                <div class="label">Channel Current (IDS)</div>
+                <div class="value" id="m-ids">15.0 &mu;A</div>
+            </div>
+            <div class="metric">
+                <div class="label">Resistance</div>
+                <div class="value" id="m-r">66.7 k&Omega;</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="viz-wrapper">
+        <canvas id="canvas"></canvas>
+    </div>
+
+    <div class="controls">
+        <span class="control-label">Biomarker Binding Concentration</span>
+        <input type="range" id="slider" min="0" max="100" step="1" value="100">
+        <span class="control-value" id="slider-val">100</span>
+    </div>
+</div>
+
+<script>
+// ───── Canvas setup (fixed internal coords, CSS scales) ─────
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const CW = 960, CH = 580;
+
+function setupCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = CW * dpr;
+    canvas.height = CH * dpr;
+    const displayW = canvas.parentElement.clientWidth;
+    canvas.style.height = (CH * displayW / CW) + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+setupCanvas();
+window.addEventListener('resize', setupCanvas);
+
+// ───── Layout constants ─────
+const GATE_H = 58;
+const EDL_TOP = GATE_H;
+const EDL_H = 26;
+const ELEC_TOP = GATE_H;
+const CHANNEL_Y = 415;
+const CHANNEL_H = 105;
+const CHANNEL_BOT = CHANNEL_Y + CHANNEL_H;
+const ELEC_W = 52;
+
+// ───── State & metrics ─────
+let binding = 100;
+const slider = document.getElementById('slider');
+const sliderValEl = document.getElementById('slider-val');
+const mVg = document.getElementById('m-vg');
+const mIds = document.getElementById('m-ids');
+const mR = document.getElementById('m-r');
+
+slider.addEventListener('input', () => {
+    binding = parseInt(slider.value);
+    sliderValEl.textContent = binding;
+    updateMetrics();
+});
+
+function updateMetrics() {
+    const vg = 0.40 + 0.20 * (binding / 100);
+    const ids = 25 * (1 - 0.40 * (binding / 100));
+    const r = 1.0 / (ids * 1e-6);
+    mVg.textContent = vg.toFixed(2) + ' V';
+    mIds.textContent = ids.toFixed(1) + ' \u00B5A';
+    mR.textContent = (r >= 1000 ? (r / 1000).toFixed(1) + ' k\u03A9' : r.toFixed(0) + ' \u03A9');
+}
+updateMetrics();
+
+// ───── Electrolyte ions (purple asterisks) ─────
+const ions = [];
+for (let i = 0; i < 80; i++) {
+    ions.push({
+        x: 20 + Math.random() * (CW - 40),
+        y: ELEC_TOP + EDL_H + 25 + Math.random() * (CHANNEL_Y - ELEC_TOP - EDL_H - 65),
+        sz: 5 + Math.random() * 7,
+        vx: (Math.random() - 0.5) * 0.38,
+        vy: (Math.random() - 0.5) * 0.38,
+        rot: Math.random() * Math.PI * 2,
+        rs: (Math.random() - 0.5) * 0.013
+    });
+}
+
+// EDL dense band ions
+const edlIons = [];
+for (let i = 0; i < 30; i++) {
+    edlIons.push({
+        x: 12 + (i / 30) * (CW - 24) + (Math.random() - 0.5) * 18,
+        y: EDL_TOP + 3 + Math.random() * (EDL_H - 6),
+        sz: 4.5 + Math.random() * 5,
+        rot: Math.random() * Math.PI * 2,
+        rs: (Math.random() - 0.5) * 0.009
+    });
+}
+
+// ───── Biomarker dots (green, near channel surface) ─────
+const biomarkers = [];
+for (let i = 0; i < 40; i++) {
+    biomarkers.push({
+        x: ELEC_W + 15 + Math.random() * (CW - ELEC_W * 2 - 30),
+        y: CHANNEL_Y - 8 - Math.random() * 55,
+        r: 2.5 + Math.random() * 4.5,
+        vx: (Math.random() - 0.5) * 0.1,
+        vy: (Math.random() - 0.5) * 0.06
+    });
+}
+
+// Surface-bound green dots (right on channel top)
+const surfaceDots = [];
+for (let i = 0; i < 55; i++) {
+    surfaceDots.push({
+        x: ELEC_W + 6 + (i / 55) * (CW - ELEC_W * 2 - 12) + (Math.random() - 0.5) * 8,
+        y: CHANNEL_Y - 2 + Math.random() * 4,
+        r: 1.8 + Math.random() * 2.5
+    });
+}
+
+// ───── Channel blue dot grid ─────
+const chDots = [];
+const chL = ELEC_W + 3, chR = CW - ELEC_W - 3;
+const gapX = 15, gapY = 15;
+let maxRow = 0;
+for (let row = 0; row * gapY < CHANNEL_H - 6; row++) {
+    const ox = (row % 2) * (gapX / 2);
+    for (let col = 0; chL + ox + col * gapX < chR; col++) {
+        chDots.push({ x: chL + ox + col * gapX, y: CHANNEL_Y + 7 + row * gapY, row });
+        if (row > maxRow) maxRow = row;
+    }
+}
+
+// ───── Draw helpers ─────
+function drawIon(x, y, sz, rot, alpha) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = '#5b3daa';
+    ctx.lineWidth = 1.7;
+    for (let i = 0; i < 3; i++) {
+        const a = (i * Math.PI) / 3;
+        const cx = Math.cos(a) * sz, sy = Math.sin(a) * sz;
+        ctx.beginPath();
+        ctx.moveTo(-cx, -sy);
+        ctx.lineTo(cx, sy);
+        ctx.stroke();
+    }
+    ctx.fillStyle = '#5b3daa';
+    for (let i = 0; i < 6; i++) {
+        const a = (i * Math.PI) / 3;
+        ctx.beginPath();
+        ctx.arc(Math.cos(a) * sz, Math.sin(a) * sz, 1.4, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.restore();
+    ctx.globalAlpha = 1;
+}
+
+function drawArrow(x, y1, y2, alpha) {
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = '#8aabbf';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, y1);
+    ctx.lineTo(x, y2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y2 + 9);
+    ctx.lineTo(x - 5.5, y2);
+    ctx.lineTo(x + 5.5, y2);
+    ctx.closePath();
+    ctx.fillStyle = '#8aabbf';
+    ctx.fill();
+    ctx.globalAlpha = 1;
+}
+
+function roundedRect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+}
+
+function drawBadge(text, cx, cy, border, bg, fg, radius) {
+    ctx.font = '600 12px -apple-system, sans-serif';
+    const tw = ctx.measureText(text).width;
+    const px = 11, py = 13;
+    const bx = cx - tw / 2 - px, by = cy - py;
+    const bw = tw + px * 2, bh = py * 2;
+    roundedRect(bx, by, bw, bh, radius || 6);
+    ctx.fillStyle = bg;
+    ctx.fill();
+    ctx.strokeStyle = border;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = fg;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, cx, cy);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+}
+
+// ───── Animation loop ─────
+let frame = 0;
+
+function animate() {
+    ctx.clearRect(0, 0, CW, CH);
+
+    // ── 1. Gate electrode ──
+    ctx.fillStyle = '#787878';
+    ctx.fillRect(0, 0, CW, GATE_H);
+    ctx.font = 'bold 14px -apple-system, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('GATE ELECTRODE', 20, GATE_H / 2);
+    ctx.textBaseline = 'alphabetic';
+
+    // ── 2. Electrolyte background gradient ──
+    const eg = ctx.createLinearGradient(0, ELEC_TOP, 0, CHANNEL_Y);
+    eg.addColorStop(0, 'rgba(175, 195, 230, 0.38)');
+    eg.addColorStop(0.12, 'rgba(185, 208, 240, 0.28)');
+    eg.addColorStop(1, 'rgba(215, 228, 248, 0.08)');
+    ctx.fillStyle = eg;
+    ctx.fillRect(0, ELEC_TOP, CW, CHANNEL_Y - ELEC_TOP);
+
+    // ── 3. EDL dense ions ──
+    for (const ion of edlIons) {
+        ion.rot += ion.rs;
+        drawIon(ion.x, ion.y, ion.sz, ion.rot, 0.82);
+    }
+
+    // ── 4. Drift arrows (pulsing) ──
+    const arrowA = (0.22 + 0.08 * Math.sin(frame * 0.028)) * (0.35 + 0.65 * binding / 100);
+    for (let i = 0; i < 5; i++) {
+        drawArrow(CW * (i + 1) / 6, ELEC_TOP + EDL_H + 45, CHANNEL_Y - 55, arrowA);
+    }
+
+    // ── 5. Floating ions ──
+    const drift = 0.006 * (binding / 100);
+    for (const ion of ions) {
+        ion.vx += (Math.random() - 0.5) * 0.045;
+        ion.vy += (Math.random() - 0.5) * 0.045 + drift;
+        ion.vx *= 0.993;
+        ion.vy *= 0.993;
+        ion.x += ion.vx;
+        ion.y += ion.vy;
+        ion.rot += ion.rs;
+        if (ion.x < 8) ion.vx = Math.abs(ion.vx);
+        if (ion.x > CW - 8) ion.vx = -Math.abs(ion.vx);
+        if (ion.y < ELEC_TOP + EDL_H + 12) ion.vy = Math.abs(ion.vy);
+        if (ion.y > CHANNEL_Y - 12) ion.vy = -Math.abs(ion.vy) * 0.6;
+        drawIon(ion.x, ion.y, ion.sz, ion.rot, 0.78);
+    }
+
+    // ── 6. Green biomarker dots (floating near surface) ──
+    const numBM = Math.round(biomarkers.length * binding / 100);
+    for (let i = 0; i < numBM; i++) {
+        const b = biomarkers[i];
+        b.x += b.vx + (Math.random() - 0.5) * 0.04;
+        b.y += b.vy + (Math.random() - 0.5) * 0.03;
+        if (b.x < ELEC_W + 8) b.vx = Math.abs(b.vx);
+        if (b.x > CW - ELEC_W - 8) b.vx = -Math.abs(b.vx);
+        if (b.y < CHANNEL_Y - 68) b.vy = Math.abs(b.vy);
+        if (b.y > CHANNEL_Y - 4) b.vy = -Math.abs(b.vy);
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(25, 105, 50, 0.72)';
+        ctx.fill();
+    }
+
+    // ── 7. Surface-bound green dots ──
+    const numSD = Math.round(surfaceDots.length * binding / 100);
+    for (let i = 0; i < numSD; i++) {
+        const s = surfaceDots[i];
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(20, 115, 50, 0.6)';
+        ctx.fill();
+    }
+
+    // ── 8. PEDOT:PSS channel background ──
+    ctx.fillStyle = 'rgba(218, 226, 234, 0.92)';
+    ctx.fillRect(ELEC_W, CHANNEL_Y, CW - ELEC_W * 2, CHANNEL_H);
+
+    // ── 9. Channel blue dot grid (dedoping with binding) ──
+    for (const d of chDots) {
+        const depthNorm = d.row / (maxRow + 1);
+        const dedope = Math.max(0, 1 - (binding / 100) * (1 - depthNorm * 0.7) * 0.55);
+        const a = 0.15 + 0.5 * dedope;
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, 3.2, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(55, 95, 195, ${a})`;
+        ctx.fill();
+    }
+
+    // ── 10. Source & Drain electrodes ──
+    ctx.fillStyle = '#6a6a6a';
+    // Source (left)
+    ctx.fillRect(0, CHANNEL_Y - 6, ELEC_W, CHANNEL_H + 35);
+    // Drain (right)
+    ctx.fillRect(CW - ELEC_W, CHANNEL_Y - 6, ELEC_W, CHANNEL_H + 35);
+
+    ctx.font = 'bold 12px -apple-system, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.82)';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('SOURCE', 3, CHANNEL_Y + CHANNEL_H / 2 + 12);
+    ctx.textAlign = 'right';
+    ctx.fillText('DRAIN', CW - 4, CHANNEL_Y + CHANNEL_H / 2 + 12);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+
+    // ── 11. Labels ──
+    drawBadge('ELECTROLYTE (NaCl)', 120, ELEC_TOP + EDL_H + 28,
+              'rgba(150,160,175,0.45)', 'rgba(255,255,255,0.88)', '#556', 13);
+
+    drawBadge('PEDOT:PSS CHANNEL', CW / 2, CHANNEL_Y + CHANNEL_H / 2 + 6,
+              'rgba(70, 110, 180, 0.45)', 'rgba(255,255,255,0.78)', '#3a5a8a', 6);
+
+    // "SATURATED" badge
+    if (binding > 55) {
+        const sa = Math.min(1, (binding - 55) / 35);
+        ctx.globalAlpha = sa;
+        drawBadge('SATURATED', CW / 2, ELEC_TOP + EDL_H + 80,
+                  '#b84535', 'rgba(255,255,255,0.92)', '#b04030', 8);
+        ctx.globalAlpha = 1;
+    }
+
+    // ── 12. Bottom substrate fill ──
+    ctx.fillStyle = '#eaedf0';
+    ctx.fillRect(ELEC_W, CHANNEL_BOT, CW - ELEC_W * 2, CH - CHANNEL_BOT);
+
+    frame++;
+    requestAnimationFrame(animate);
+}
+
+animate();
+</script>
+
+</body>
+</html>

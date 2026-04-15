@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debye Screening Decay Curve</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 800px;
+        }
+        h2 { margin-top: 0; color: #111; }
+        .dashboard {
+            display: flex;
+            justify-content: space-between;
+            background: #eef2f5;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .metric { display: flex; flex-direction: column; align-items: center; }
+        .metric-title { font-size: 0.85em; color: #666; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;}
+        .metric-value { font-size: 1.4em; font-weight: bold; margin-top: 5px; }
+        .val-nano { color: #28a745; }
+        .val-anti { color: #d9534f; }
+        .slider-group { margin-bottom: 20px; }
+        .slider-label { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 8px; }
+        input[type="range"] { width: 100%; cursor: pointer; }
+        canvas {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            height: 400px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Debye Screening Length & Signal Decay</h2>
+    <div class="slider-group">
+        <div class="slider-label">
+            <span>Fluid Ionic Strength</span>
+            <span id="ionic-val">30 mM (Saliva)</span>
+        </div>
+        <input type="range" id="ionic-slider" min="1" max="150" step="1" value="30">
+        <div style="display: flex; justify-content: space-between; font-size: 0.8em; color: #888; margin-top: 4px;">
+            <span>1 mM (Dilute)</span>
+            <span>150 mM (Blood Plasma)</span>
+        </div>
+    </div>
+    <div class="dashboard">
+        <div class="metric">
+            <span class="metric-title">Debye Length (λD)</span>
+            <span class="metric-value" id="debye-val">1.76 nm</span>
+        </div>
+        <div class="metric">
+            <span class="metric-title">Nanobody (3 nm) Coupling</span>
+            <span class="metric-value val-nano" id="nano-val">18.1%</span>
+        </div>
+        <div class="metric">
+            <span class="metric-title">Antibody (12 nm) Coupling</span>
+            <span class="metric-value val-anti" id="anti-val">0.1%</span>
+        </div>
+    </div>
+    <canvas id="chartCanvas" width="740" height="400"></canvas>
+</div>
+<script>
+    const canvas = document.getElementById('chartCanvas');
+    const ctx = canvas.getContext('2d');
+    const slider = document.getElementById('ionic-slider');
+    const ionicValText = document.getElementById('ionic-val');
+    const debyeValText = document.getElementById('debye-val');
+    const nanoValText = document.getElementById('nano-val');
+    const antiValText = document.getElementById('anti-val');
+    const X_MAX = 15, Y_MAX = 1.0, NANO_D = 3, ANTI_D = 12;
+
+    function drawChart() {
+        const I = parseFloat(slider.value);
+        let fluidLabel = "mM";
+        if(I >= 20 && I <= 40) fluidLabel = "mM (Saliva)";
+        else if (I >= 130 && I <= 150) fluidLabel = "mM (Blood Plasma)";
+        ionicValText.innerText = `${I} ${fluidLabel}`;
+        const molarity = I / 1000;
+        const debyeLength = 0.304 / Math.sqrt(molarity);
+        const nanoCoupling = Math.exp(-NANO_D / debyeLength);
+        const antiCoupling = Math.exp(-ANTI_D / debyeLength);
+        debyeValText.innerText = `${debyeLength.toFixed(2)} nm`;
+        nanoValText.innerText = `${(nanoCoupling * 100).toFixed(1)}%`;
+        antiValText.innerText = `${(antiCoupling * 100).toFixed(2)}%`;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const padX = 40, padY = 30;
+        const chartW = canvas.width - padX * 2, chartH = canvas.height - padY * 2;
+        ctx.strokeStyle = '#eee'; ctx.lineWidth = 1;
+        ctx.font = '12px sans-serif'; ctx.fillStyle = '#888'; ctx.textAlign = 'center';
+        for(let x=0; x<=X_MAX; x+=3) {
+            const px = padX + (x / X_MAX) * chartW;
+            ctx.beginPath(); ctx.moveTo(px, padY); ctx.lineTo(px, padY + chartH); ctx.stroke();
+            ctx.fillText(x, px, padY + chartH + 20);
+        }
+        ctx.fillText("Distance from Sensor Gate (nm)", canvas.width/2, canvas.height - 5);
+        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        for(let y=0; y<=1; y+=0.2) {
+            const py = padY + chartH - (y / Y_MAX) * chartH;
+            ctx.beginPath(); ctx.moveTo(padX, py); ctx.lineTo(padX + chartW, py); ctx.stroke();
+            ctx.fillText(`${(y*100).toFixed(0)}%`, padX - 10, py);
+        }
+        ctx.strokeStyle = '#0056b3'; ctx.lineWidth = 3; ctx.beginPath();
+        for(let px=0; px<=chartW; px++) {
+            const x = (px / chartW) * X_MAX;
+            const y = Math.exp(-x / debyeLength);
+            const py = padY + chartH - (y / Y_MAX) * chartH;
+            if(px === 0) ctx.moveTo(padX + px, py); else ctx.lineTo(padX + px, py);
+        }
+        ctx.stroke();
+        function drawMarker(dist, label, color, coupling) {
+            const px = padX + (dist / X_MAX) * chartW;
+            const py = padY + chartH - (coupling / Y_MAX) * chartH;
+            ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.setLineDash([5, 5]);
+            ctx.beginPath(); ctx.moveTo(px, padY); ctx.lineTo(px, padY + chartH); ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = color; ctx.beginPath(); ctx.arc(px, py, 6, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#333'; ctx.textAlign = 'left'; ctx.font = 'bold 13px sans-serif';
+            ctx.fillText(label, px + 10, padY + 15);
+        }
+        drawMarker(NANO_D, "Nanobody (3nm)", "#28a745", nanoCoupling);
+        drawMarker(ANTI_D, "Antibody (12nm)", "#d9534f", antiCoupling);
+    }
+    slider.addEventListener('input', drawChart);
+    drawChart();
+</script>
+</body>
+</html>

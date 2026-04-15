@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GastroSense — Intragastric Monitor</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #080c14;
+    color: #c8d0e0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 14px;
+}
+.monitor { width: 100%; max-width: 1100px; }
+
+/* ── Header ── */
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.device-id { display: flex; align-items: center; gap: 10px; }
+.rec { width: 9px; height: 9px; background: #ef5350; border-radius: 50%;
+       animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.25} }
+.device-id strong { font-size: 1.25em; color: #e8ecf4; }
+.tag {
+    font-size: .78em; color: #6a7588; border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px; padding: 3px 12px;
+}
+.top-right { display: flex; align-items: center; gap: 14px; }
+.top-right select {
+    background: #151c2c; color: #c8d0e0; border: 1px solid rgba(255,255,255,.1);
+    padding: 5px 10px; border-radius: 6px; font-size: .88em; cursor: pointer;
+}
+.clock { font-family: 'SF Mono',Menlo,Consolas,monospace; font-size: .82em; color: #6a7588; }
+
+/* ── Panels ── */
+.panel {
+    background: #111827;
+    border: 1px solid rgba(255,255,255,.05);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+}
+.p-label {
+    font-size: .68em; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: #5a6577; margin-bottom: 10px;
+}
+.p-accent { color: #00e676; }
+.p-cyan { color: #26c6da; }
+.p-amber { color: #ffa726; }
+
+/* ── Waveform ── */
+.wave-canvas { width: 100%; display: block; border-radius: 6px; }
+.wave-stats {
+    display: flex; gap: 28px; margin-top: 10px;
+    padding-top: 10px; border-top: 1px solid rgba(255,255,255,.04);
+    flex-wrap: wrap;
+}
+.ws { display: flex; flex-direction: column; }
+.ws-lbl { font-size: .67em; text-transform: uppercase; letter-spacing: 1px; color: #5a6577; }
+.ws-val {
+    font-family: 'SF Mono',Menlo,Consolas,monospace;
+    font-size: 1.35em; font-weight: 700; color: #00e676; margin-top: 1px;
+}
+.ws-unit { font-size: .78em; color: #5a6577; font-weight: 400; margin-left: 3px; }
+
+/* ── Mid row grid ── */
+.mid-row { display: grid; grid-template-columns: 270px 1fr; gap: 10px; }
+
+/* ── Pressure ── */
+.pres-panel { text-align: center; }
+.pres-panel canvas { display: block; margin: 0 auto; }
+.pres-big {
+    font-family: 'SF Mono',Menlo,Consolas,monospace;
+    font-size: 2.5em; font-weight: 700; color: #26c6da; margin: 6px 0 2px;
+}
+.pres-big .u { font-size: .36em; color: #5a6577; font-weight: 400; }
+.pres-stats {
+    display: flex; justify-content: center; gap: 16px;
+    font-size: .8em; color: #5a6577; margin-top: 6px;
+}
+.pres-stats b { color: #26c6da; font-family: 'SF Mono',monospace; font-weight: 600; }
+.pres-trend { margin-top: 10px; }
+.pres-trend canvas { width: 100%; height: 50px; display: block; border-radius: 4px; }
+
+/* ── VOCs ── */
+.voc-row { display: flex; align-items: center; gap: 10px; margin-bottom: 11px; }
+.voc-name { width: 44px; font-size: .85em; font-weight: 700; text-align: right; }
+.voc-track {
+    flex: 1; height: 20px; background: rgba(255,255,255,.04);
+    border-radius: 4px; position: relative; overflow: hidden;
+}
+.voc-fill { height: 100%; border-radius: 4px; transition: width .4s, background .4s; }
+.voc-num {
+    width: 78px; text-align: right; font-family: 'SF Mono',monospace;
+    font-size: .88em; font-weight: 600;
+}
+.voc-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.voc-sub { font-size: .7em; color: #4a5568; margin-top: -6px; margin-bottom: 8px; margin-left: 54px; }
+
+/* ── Alerts ── */
+.alert-row {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 7px 0; font-size: .88em; line-height: 1.45;
+}
+.alert-row + .alert-row { border-top: 1px solid rgba(255,255,255,.03); }
+.ai { flex-shrink: 0; font-size: 1.05em; margin-top: 1px; }
+.a-ok  { color: #00e676; }
+.a-wrn { color: #ffa726; }
+.a-bad { color: #ef5350; }
+
+/* ── Disclaimer ── */
+.disclaimer {
+    text-align: center; font-size: .7em; color: #3a4252;
+    margin-top: 8px; padding-top: 8px;
+    border-top: 1px solid rgba(255,255,255,.03);
+}
+
+@media (max-width: 720px) {
+    .mid-row { grid-template-columns: 1fr; }
+    .wave-stats { gap: 16px; }
+}
+</style>
+</head>
+<body>
+
+<div class="monitor">
+    <!-- ── TOP BAR ── -->
+    <div class="top-bar">
+        <div class="device-id">
+            <div class="rec"></div>
+            <strong>GastroSense</strong>
+            <span class="tag">G-Tube &bull; Gastric Body &bull; Intraluminal</span>
+        </div>
+        <div class="top-right">
+            <select id="scenario">
+                <option value="normal_fasting">Normal — Fasting (MMC Phase II)</option>
+                <option value="normal_fed">Normal — Postprandial</option>
+                <option value="gastroparesis">Gastroparesis</option>
+                <option value="sibo">SIBO (Bacterial Overgrowth)</option>
+                <option value="h_pylori">H. pylori Infection</option>
+                <option value="obstruction">Gastric Outlet Obstruction</option>
+            </select>
+            <span class="clock" id="clock"></span>
+        </div>
+    </div>
+
+    <!-- ── CONTRACTILITY ── -->
+    <div class="panel">
+        <div class="p-label">Gastric Contractility &mdash; Intraluminal Manometry <span class="p-accent">&#9679;</span></div>
+        <canvas class="wave-canvas" id="waveCanvas"></canvas>
+        <div class="wave-stats">
+            <div class="ws"><span class="ws-lbl">Peak Amplitude</span><span><span class="ws-val" id="s-amp">25</span><span class="ws-unit">mmHg</span></span></div>
+            <div class="ws"><span class="ws-lbl">Frequency</span><span><span class="ws-val" id="s-freq">3.0</span><span class="ws-unit">CPM</span></span></div>
+            <div class="ws"><span class="ws-lbl">Motility Index</span><span><span class="ws-val" id="s-mi">75</span></span></div>
+            <div class="ws"><span class="ws-lbl">Basal Tone</span><span><span class="ws-val" id="s-base">5</span><span class="ws-unit">mmHg</span></span></div>
+            <div class="ws"><span class="ws-lbl">Status</span><span><span class="ws-val" id="s-status" style="font-size:.85em">Normal</span></span></div>
+        </div>
+    </div>
+
+    <!-- ── MID ROW ── -->
+    <div class="mid-row">
+        <!-- Pressure -->
+        <div class="panel pres-panel">
+            <div class="p-label">Intragastric Pressure <span class="p-cyan">&#9679;</span></div>
+            <canvas id="gaugeC" width="240" height="145"></canvas>
+            <div class="pres-big"><span id="p-val">6.0</span> <span class="u">mmHg</span></div>
+            <div class="pres-stats">
+                Min <b id="p-min">5.1</b>&ensp;Max <b id="p-max">7.8</b>&ensp;Avg <b id="p-avg">6.2</b>
+            </div>
+            <div class="pres-trend">
+                <canvas id="trendC"></canvas>
+            </div>
+        </div>
+
+        <!-- VOCs -->
+        <div class="panel">
+            <div class="p-label">Volatile Organic Compounds <span class="p-amber">&#9679;</span></div>
+            <div id="voc-box"></div>
+        </div>
+    </div>
+
+    <!-- ── CLINICAL ASSESSMENT ── -->
+    <div class="panel">
+        <div class="p-label">Clinical Assessment &amp; Interpretation</div>
+        <div id="alerts"></div>
+    </div>
+
+    <div class="disclaimer">
+        Concept demonstration for educational purposes &mdash; not a certified medical device. Simulated data based on published gastric physiology references.
+    </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   SCENARIOS — each models a distinct clinical state
+   ═══════════════════════════════════════════════════ */
+const SC = {
+    normal_fasting: {
+        amp:25, freq:3.0, base:5, noise:1.6, varAmp:.30,
+        pMu:6, pSig:1.2,
+        h2:5, ch4:1.5, h2s:.2, nh3:3
+    },
+    normal_fed: {
+        amp:48, freq:3.0, base:8, noise:2.5, varAmp:.20,
+        pMu:13, pSig:1.8,
+        h2:9, ch4:2.2, h2s:.35, nh3:4.5
+    },
+    gastroparesis: {
+        amp:7, freq:1.0, base:3, noise:1.4, varAmp:.60,
+        pMu:3.5, pSig:.8,
+        h2:7, ch4:2, h2s:.3, nh3:3.5
+    },
+    sibo: {
+        amp:28, freq:2.8, base:6, noise:2.2, varAmp:.25,
+        pMu:8, pSig:1.5,
+        h2:38, ch4:19, h2s:.9, nh3:5.5
+    },
+    h_pylori: {
+        amp:26, freq:2.4, base:7, noise:2.8, varAmp:.30,
+        pMu:9, pSig:1.8,
+        h2:11, ch4:3.5, h2s:.5, nh3:32
+    },
+    obstruction: {
+        amp:70, freq:3.8, base:16, noise:3.5, varAmp:.12,
+        pMu:30, pSig:3,
+        h2:13, ch4:4.5, h2s:.7, nh3:7
+    }
+};
+
+const VOC_CFG = {
+    h2:  { sym:'H\u2082',  full:'Hydrogen',         unit:'ppm', max:50, gTh:10,  yTh:20,  note:'Bacterial fermentation marker' },
+    ch4: { sym:'CH\u2084', full:'Methane',           unit:'ppm', max:25, gTh:3,   yTh:10,  note:'Methanogenic archaea indicator' },
+    h2s: { sym:'H\u2082S', full:'Hydrogen Sulfide',  unit:'ppm', max:3,  gTh:.5,  yTh:1,   note:'Sulfate-reducing bacteria' },
+    nh3: { sym:'NH\u2083', full:'Ammonia',           unit:'ppm', max:40, gTh:5,   yTh:15,  note:'H. pylori urease activity' }
+};
+
+/* ═══════ LIVE STATE (smoothly interpolated) ═══════ */
+const KEYS = ['amp','freq','base','noise','varAmp','pMu','pSig','h2','ch4','h2s','nh3'];
+const live = {}, tgt = {};
+KEYS.forEach(k => { live[k] = SC.normal_fasting[k]; tgt[k] = live[k]; });
+
+let simT = 0;
+const DT = .35;                   // simulated seconds / frame
+const waveBuf = [], WLEN = 480;   // contractility ring buffer
+const presBuf = [], PLEN = 200;   // pressure history
+
+/* ═══════ SCENARIO SELECTOR ═══════ */
+document.getElementById('scenario').addEventListener('change', e => {
+    const s = SC[e.target.value];
+    KEYS.forEach(k => tgt[k] = s[k]);
+});
+
+/* ═══════ BUILD VOC HTML ═══════ */
+(function(){
+    let h = '';
+    for (const [k,c] of Object.entries(VOC_CFG)) {
+        h += `<div class="voc-row">
+            <span class="voc-name">${c.sym}</span>
+            <div class="voc-track"><div class="voc-fill" id="vf-${k}"></div></div>
+            <span class="voc-num" id="vn-${k}">—</span>
+            <div class="voc-dot" id="vd-${k}"></div>
+        </div>
+        <div class="voc-sub">${c.full} — ${c.note} &ensp;(normal &lt;${c.gTh} ${c.unit})</div>`;
+    }
+    document.getElementById('voc-box').innerHTML = h;
+})();
+
+/* ═══════ CANVAS SIZING ═══════ */
+const wC = document.getElementById('waveCanvas');
+const wX = wC.getContext('2d');
+const gC = document.getElementById('gaugeC');
+const gX = gC.getContext('2d');
+const tC = document.getElementById('trendC');
+const tX = tC.getContext('2d');
+
+function sizeWave() {
+    const w = wC.parentElement.clientWidth - 36, h = 195, d = devicePixelRatio||1;
+    wC.width = w*d; wC.height = h*d; wC.style.width = w+'px'; wC.style.height = h+'px';
+    wX.setTransform(d,0,0,d,0,0);
+}
+function sizeGauge() {
+    const d = devicePixelRatio||1;
+    gC.width = 240*d; gC.height = 145*d; gC.style.width = '240px'; gC.style.height = '145px';
+    gX.setTransform(d,0,0,d,0,0);
+}
+function sizeTrend() {
+    const w = tC.parentElement.clientWidth - 4, h = 48, d = devicePixelRatio||1;
+    tC.width = w*d; tC.height = h*d; tC.style.width = w+'px'; tC.style.height = h+'px';
+    tX.setTransform(d,0,0,d,0,0);
+}
+sizeWave(); sizeGauge(); sizeTrend();
+window.addEventListener('resize', () => { sizeWave(); sizeTrend(); });
+
+/* ═══════ CONTRACTION SHAPE ═══════ */
+function cShape(ph) {
+    if (ph < .07) return Math.pow(ph/.07, 1.8);
+    if (ph < .14) return 1 - .13*(ph-.07)/.07;
+    if (ph < .36) return .87 * Math.pow(1-(ph-.14)/.22, 2);
+    return 0;
+}
+
+function genContraction() {
+    const per = 60 / Math.max(live.freq, .3);
+    const ph = (simT % per) / per;
+    const ci = Math.floor(simT / per);
+    const jit = 1 + live.varAmp * (Math.sin(ci*2.7)*.5 + Math.sin(ci*1.3)*.3);
+    return Math.max(0, live.base + live.amp * jit * cShape(ph) + (Math.random()-.5)*live.noise);
+}
+
+function genPressure() {
+    const drift = Math.sin(simT*.018)*.45 + Math.sin(simT*.0065)*.3;
+    return Math.max(0, live.pMu + drift*live.pSig + (Math.random()-.5)*live.pSig*.55);
+}
+
+/* ═══════ DRAW: WAVEFORM ═══════ */
+function drawWave() {
+    const w = wC.width/(devicePixelRatio||1), h = wC.height/(devicePixelRatio||1);
+    wX.clearRect(0,0,w,h);
+    const pL=44, pR=10, pT=8, pB=20;
+    const cw=w-pL-pR, ch=h-pT-pB;
+    const yMax = Math.max(60, Math.ceil((live.base+live.amp*1.6)/10)*10);
+    const yStep = yMax<=40?10:20;
+
+    // grid
+    wX.strokeStyle='rgba(255,255,255,.045)'; wX.lineWidth=1;
+    wX.font='10px SF Mono,Menlo,monospace'; wX.fillStyle='#3e4a5c';
+    wX.textAlign='right'; wX.textBaseline='middle';
+    for(let v=0;v<=yMax;v+=yStep){
+        const y=pT+ch-(v/yMax)*ch;
+        wX.beginPath(); wX.moveTo(pL,y); wX.lineTo(pL+cw,y); wX.stroke();
+        wX.fillText(v,pL-6,y);
+    }
+    // x labels
+    wX.textAlign='center'; wX.textBaseline='top';
+    const totSec=WLEN*DT;
+    for(let s=0;s<=totSec;s+=30){
+        const x=pL+(s/totSec)*cw;
+        wX.fillText(s+'s',x,pT+ch+5);
+    }
+
+    if(waveBuf.length<2) return;
+
+    // normal range shading
+    wX.fillStyle='rgba(0,230,118,.03)';
+    const ny1=pT+ch-(60/yMax)*ch, ny2=pT+ch-(10/yMax)*ch;
+    wX.fillRect(pL,ny1,cw,ny2-ny1);
+
+    // trace
+    wX.shadowColor='#00e676'; wX.shadowBlur=5;
+    wX.strokeStyle='#00e676'; wX.lineWidth=1.7;
+    wX.beginPath();
+    for(let i=0;i<waveBuf.length;i++){
+        const x=pL+(i/WLEN)*cw, y=pT+ch-(waveBuf[i]/yMax)*ch;
+        i===0?wX.moveTo(x,y):wX.lineTo(x,y);
+    }
+    wX.stroke(); wX.shadowBlur=0;
+}
+
+/* ═══════ DRAW: GAUGE ═══════ */
+function drawGauge(pv) {
+    const W=240,H=145; gX.clearRect(0,0,W,H);
+    const cx=W/2, cy=H-12, r=85, maxP=40;
+    const a4v = v => Math.PI - (v/maxP)*Math.PI;
+
+    // arcs
+    gX.lineWidth=13;
+    [[0,10,'rgba(0,230,118,.22)'],[10,20,'rgba(255,167,38,.22)'],[20,40,'rgba(239,83,80,.22)']].forEach(([lo,hi,c])=>{
+        gX.beginPath(); gX.arc(cx,cy,r,a4v(hi),a4v(lo)); gX.strokeStyle=c; gX.stroke();
+    });
+
+    // ticks
+    for(let v=0;v<=maxP;v+=5){
+        const a=a4v(v), major=v%10===0;
+        gX.beginPath();
+        gX.moveTo(cx+Math.cos(a)*(r-6),cy-Math.sin(a)*(r-6));
+        gX.lineTo(cx+Math.cos(a)*(r+6),cy-Math.sin(a)*(r+6));
+        gX.strokeStyle=major?'rgba(255,255,255,.28)':'rgba(255,255,255,.1)';
+        gX.lineWidth=major?1.5:1; gX.stroke();
+        if(major){
+            gX.font='9px SF Mono,monospace'; gX.fillStyle='#4a5568';
+            gX.textAlign='center'; gX.textBaseline='middle';
+            gX.fillText(v,cx+Math.cos(a)*(r+17),cy-Math.sin(a)*(r+17));
+        }
+    }
+
+    // needle
+    const cl=Math.max(0,Math.min(maxP,pv)), na=a4v(cl);
+    gX.shadowColor='#26c6da'; gX.shadowBlur=5;
+    gX.strokeStyle='#26c6da'; gX.lineWidth=2.5;
+    gX.beginPath(); gX.moveTo(cx,cy);
+    gX.lineTo(cx+Math.cos(na)*(r-20),cy-Math.sin(na)*(r-20));
+    gX.stroke(); gX.shadowBlur=0;
+    gX.beginPath(); gX.arc(cx,cy,3.5,0,Math.PI*2);
+    gX.fillStyle='#26c6da'; gX.fill();
+}
+
+/* ═══════ DRAW: PRESSURE TREND ═══════ */
+function drawTrend() {
+    const w=tC.width/(devicePixelRatio||1), h=tC.height/(devicePixelRatio||1);
+    tX.clearRect(0,0,w,h);
+    if(presBuf.length<3) return;
+    const mn=Math.min(...presBuf)-.5, mx=Math.max(...presBuf)+.5;
+    const range=Math.max(mx-mn,1);
+    tX.strokeStyle='rgba(38,198,218,.5)'; tX.lineWidth=1.2;
+    tX.beginPath();
+    for(let i=0;i<presBuf.length;i++){
+        const x=(i/PLEN)*w, y=h-((presBuf[i]-mn)/range)*h;
+        i===0?tX.moveTo(x,y):tX.lineTo(x,y);
+    }
+    tX.stroke();
+}
+
+/* ═══════ VOC UPDATE ═══════ */
+function updateVOCs() {
+    for(const [k,c] of Object.entries(VOC_CFG)){
+        const v=Math.max(0, live[k]+(Math.random()-.5)*c.max*.004);
+        const pct=Math.min(100,(v/c.max)*100);
+        const bar=document.getElementById('vf-'+k);
+        const num=document.getElementById('vn-'+k);
+        const dot=document.getElementById('vd-'+k);
+        bar.style.width=pct+'%';
+        let col;
+        if(v<=c.gTh){ col='#00e676'; bar.style.background='rgba(0,230,118,.5)'; }
+        else if(v<=c.yTh){ col='#ffa726'; bar.style.background='rgba(255,167,38,.5)'; }
+        else{ col='#ef5350'; bar.style.background='rgba(239,83,80,.5)'; }
+        dot.style.background=col;
+        num.style.color=col;
+        num.textContent=(v<1?v.toFixed(2):v.toFixed(1))+' '+c.unit;
+    }
+}
+
+/* ═══════ CLINICAL ALERTS ═══════ */
+function updateAlerts() {
+    const a=[];
+    // contractility
+    if(live.amp<12)
+        a.push(['bad',`Reduced contractile amplitude (${live.amp.toFixed(0)} mmHg). Pattern consistent with gastroparesis or gastric hypomotility. Consider prokinetic trial and gastric emptying study.`]);
+    else if(live.amp>60)
+        a.push(['wrn',`Hypercontractile pattern (${live.amp.toFixed(0)} mmHg). Evaluate for mechanical obstruction or gastric spasm.`]);
+    else
+        a.push(['ok',`Contractile amplitude within normal limits (${live.amp.toFixed(0)} mmHg, reference 15–60 mmHg).`]);
+
+    if(live.freq<1.5)
+        a.push(['wrn',`Bradygastria (${live.freq.toFixed(1)} CPM). Reduced slow-wave frequency below the normal ~3 CPM. May impair gastric emptying.`]);
+    else if(live.freq>4.0)
+        a.push(['wrn',`Tachygastria (${live.freq.toFixed(1)} CPM). Elevated pacing frequency suggestive of gastric dysrhythmia.`]);
+    else
+        a.push(['ok',`Gastric slow-wave frequency normal (${live.freq.toFixed(1)} CPM, reference 2.5–3.7 CPM).`]);
+
+    // pressure
+    if(live.pMu>25)
+        a.push(['bad',`Intragastric pressure elevated (${live.pMu.toFixed(0)} mmHg). Evaluate for gastric outlet obstruction, pyloric stenosis, or bezoar.`]);
+    else if(live.pMu>15)
+        a.push(['wrn',`Mildly elevated intragastric pressure (${live.pMu.toFixed(0)} mmHg, reference 5–10). Monitor trend and assess for early obstruction.`]);
+    else if(live.pMu<3)
+        a.push(['wrn',`Low intragastric pressure (${live.pMu.toFixed(1)} mmHg). Consider gastric atony or sensor positioning artifact.`]);
+    else
+        a.push(['ok',`Intragastric pressure within reference range (${live.pMu.toFixed(1)} mmHg, reference 5–10 mmHg at rest).`]);
+
+    // VOCs
+    if(live.h2>20)
+        a.push(['bad',`Hydrogen elevated (${live.h2.toFixed(0)} ppm, threshold >20). Strongly suggestive of SIBO. Recommend lactulose breath test for confirmation.`]);
+    else if(live.h2>10)
+        a.push(['wrn',`Borderline hydrogen (${live.h2.toFixed(0)} ppm). Consider serial monitoring or breath test.`]);
+
+    if(live.ch4>10)
+        a.push(['bad',`Methane elevated (${live.ch4.toFixed(0)} ppm, threshold >10). Methanogenic colonization may contribute to constipation-predominant symptoms.`]);
+    else if(live.ch4>3)
+        a.push(['wrn',`Borderline methane (${live.ch4.toFixed(1)} ppm). May indicate emerging methanogen overgrowth.`]);
+
+    if(live.nh3>15)
+        a.push(['bad',`Ammonia elevated (${live.nh3.toFixed(0)} ppm, threshold >15). High suspicion for H. pylori urease activity. Recommend urea breath test or endoscopic biopsy with CLO test.`]);
+    else if(live.nh3>5)
+        a.push(['wrn',`Borderline ammonia (${live.nh3.toFixed(1)} ppm). Low-level urease activity possible; consider H. pylori screening.`]);
+
+    if(live.h2s>1)
+        a.push(['wrn',`H\u2082S elevated (${live.h2s.toFixed(2)} ppm). Sulfate-reducing bacteria may be present; evaluate dietary sulfur intake.`]);
+
+    if(a.length<=3) a.push(['ok','VOC profile within normal limits — no evidence of bacterial overgrowth or infection.']);
+
+    const ic={ok:'✓',wrn:'⚠',bad:'✗'};
+    document.getElementById('alerts').innerHTML = a.map(([lv,tx])=>
+        `<div class="alert-row"><span class="ai a-${lv}">${ic[lv]}</span><span>${tx}</span></div>`
+    ).join('');
+}
+
+/* ═══════ CLOCK ═══════ */
+function tickClock(){
+    const d=new Date(), pad=n=>(n<10?'0':'')+n;
+    document.getElementById('clock').textContent =
+        `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+setInterval(tickClock,1000); tickClock();
+
+/* ═══════ MAIN LOOP ═══════ */
+let fr=0;
+function loop(){
+    // smooth interpolation toward target state
+    KEYS.forEach(k => live[k]+=(tgt[k]-live[k])*.016);
+    simT+=DT;
+
+    // contractility
+    waveBuf.push(genContraction());
+    if(waveBuf.length>WLEN) waveBuf.shift();
+
+    // pressure
+    const pv=genPressure();
+    presBuf.push(pv);
+    if(presBuf.length>PLEN) presBuf.shift();
+
+    // render
+    drawWave();
+    drawGauge(pv);
+    drawTrend();
+
+    // numeric readouts
+    document.getElementById('p-val').textContent=pv.toFixed(1);
+    const pc = pv>25?'#ef5350':pv>15?'#ffa726':'#26c6da';
+    document.getElementById('p-val').style.color=pc;
+    if(presBuf.length>5){
+        document.getElementById('p-min').textContent=Math.min(...presBuf).toFixed(1);
+        document.getElementById('p-max').textContent=Math.max(...presBuf).toFixed(1);
+        document.getElementById('p-avg').textContent=(presBuf.reduce((a,b)=>a+b,0)/presBuf.length).toFixed(1);
+    }
+    document.getElementById('s-amp').textContent=live.amp.toFixed(0);
+    document.getElementById('s-freq').textContent=live.freq.toFixed(1);
+    document.getElementById('s-mi').textContent=(live.amp*live.freq).toFixed(0);
+    document.getElementById('s-base').textContent=live.base.toFixed(0);
+
+    // contractility status badge
+    const stEl=document.getElementById('s-status');
+    if(live.amp<12){ stEl.textContent='Hypomotile'; stEl.style.color='#ef5350'; }
+    else if(live.amp>60){ stEl.textContent='Hypercontractile'; stEl.style.color='#ffa726'; }
+    else if(live.freq<1.5){ stEl.textContent='Bradygastria'; stEl.style.color='#ffa726'; }
+    else{ stEl.textContent='Normal'; stEl.style.color='#00e676'; }
+
+    // VOC + alerts every few frames
+    if(fr%4===0){ updateVOCs(); updateAlerts(); }
+
+    fr++;
+    requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>

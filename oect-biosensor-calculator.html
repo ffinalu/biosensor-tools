@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OECT Biosensor Calculator</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #e4e8ee;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            background: #eef1f5;
+            border-radius: 22px;
+            padding: 28px 28px 22px;
+            width: 100%;
+            max-width: 1020px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.13);
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .title-area {}
+        .title { font-size: 1.55em; font-weight: 700; color: #1a1a1a; }
+        .current-shift { color: #666; margin-top: 6px; font-size: 1em; }
+        .current-shift span { font-weight: 700; color: #1a1a1a; }
+        .metrics { display: flex; gap: 32px; }
+        .metric { text-align: center; }
+        .metric-label {
+            font-size: 0.7em; font-weight: 700; color: #999;
+            letter-spacing: 1.2px; text-transform: uppercase;
+        }
+        .metric-value {
+            font-size: 1.35em; font-weight: 700; color: #1a1a1a;
+            font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+            margin-top: 3px;
+        }
+
+        /* Visualization */
+        .viz-wrapper {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+        canvas { display: block; width: 100%; }
+        .gate-channel {
+            background: #e2e2e2;
+            padding: 10px 22px 12px;
+            border-top: 3px solid #999;
+        }
+        .gate-channel strong { display: block; font-size: 1.05em; color: #222; }
+        .gate-channel span { font-size: 0.82em; color: #888; }
+
+        /* Controls */
+        .controls {
+            margin-top: 18px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px 36px;
+        }
+        .control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .control-label {
+            font-size: 0.88em; color: #666; white-space: nowrap;
+            min-width: 155px;
+        }
+        .control input[type="range"] {
+            flex: 1; cursor: pointer;
+            accent-color: #5b7fc4;
+            height: 6px;
+        }
+        .control-value {
+            background: white;
+            border: 1.5px solid #d0d4da;
+            border-radius: 7px;
+            padding: 5px 10px;
+            font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+            font-size: 0.92em;
+            min-width: 55px;
+            text-align: center;
+            font-weight: 600;
+            color: #333;
+        }
+
+        /* Receptor toggle */
+        .receptor-row {
+            margin-top: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .receptor-row .control-label { min-width: auto; font-weight: 600; }
+        .toggle-btn {
+            padding: 5px 16px;
+            border: 2px solid #5b7fc4;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.82em;
+            font-weight: 600;
+            color: #5b7fc4;
+            transition: all 0.2s;
+        }
+        .toggle-btn:hover { background: #f0f4fb; }
+        .toggle-btn.active {
+            background: #5b7fc4;
+            color: white;
+        }
+
+        @media (max-width: 700px) {
+            .controls { grid-template-columns: 1fr; }
+            .header { flex-direction: column; }
+            .control-label { min-width: 120px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <div class="title-area">
+            <div class="title">OECT Biosensor Calculator</div>
+            <div class="current-shift">Expected Current Shift: <span id="current-shift-val">28.9 nA</span></div>
+        </div>
+        <div class="metrics">
+            <div class="metric">
+                <div class="metric-label">Debye Length</div>
+                <div class="metric-value" id="metric-debye">1.76 nm</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Screening</div>
+                <div class="metric-value" id="metric-screening">18.1%</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Occupancy</div>
+                <div class="metric-value" id="metric-occupancy">0.05%</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visualization -->
+    <div class="viz-wrapper">
+        <canvas id="canvas"></canvas>
+        <div class="gate-channel">
+            <strong>OECT Gate Channel</strong>
+            <span>Polymer (e.g. PEDOT:PSS)</span>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+        <div class="control">
+            <span class="control-label">Ionic Strength (mM)</span>
+            <input type="range" id="sl-ionic" min="10" max="150" step="1" value="30">
+            <span class="control-value" id="val-ionic">30</span>
+        </div>
+        <div class="control">
+            <span class="control-label">Target (pM)</span>
+            <input type="range" id="sl-conc" min="0" max="1000" step="1" value="189">
+            <span class="control-value" id="val-conc">0.5</span>
+        </div>
+        <div class="control">
+            <span class="control-label">Kd (pM)</span>
+            <input type="range" id="sl-kd" min="0" max="1000" step="1" value="667">
+            <span class="control-value" id="val-kd">1000</span>
+        </div>
+        <div class="control">
+            <span class="control-label">Target Net Charge (z)</span>
+            <input type="range" id="sl-z" min="1" max="5" step="1" value="2">
+            <span class="control-value" id="val-z">2</span>
+        </div>
+    </div>
+
+    <!-- Receptor Type Toggle -->
+    <div class="receptor-row">
+        <span class="control-label">Receptor:</span>
+        <button class="toggle-btn active" data-d="3" id="btn-nano">Nanobody (3 nm)</button>
+        <button class="toggle-btn" data-d="12" id="btn-anti">Antibody (12 nm)</button>
+    </div>
+</div>
+
+<script>
+// ──────────── State ────────────
+const state = {
+    ionicStrength: 30,
+    targetConc: 0.5,
+    kd: 1000,
+    zCharge: 2,
+    distance: 3
+};
+const BASE_MULTIPLIER = 160000;
+
+// ──────────── Log-scale helpers for concentration & Kd sliders ────────────
+function logToVal(sliderPos, min, max) {
+    const logMin = Math.log10(min);
+    const logMax = Math.log10(max);
+    return Math.pow(10, logMin + (logMax - logMin) * sliderPos / 1000);
+}
+function valToLog(value, min, max) {
+    const logMin = Math.log10(min);
+    const logMax = Math.log10(max);
+    return (Math.log10(value) - logMin) / (logMax - logMin) * 1000;
+}
+
+// ──────────── Physics ────────────
+function compute() {
+    const molarity = state.ionicStrength / 1000;
+    const debyeLength = 0.304 / Math.sqrt(molarity);
+    const screeningFactor = Math.exp(-state.distance / debyeLength);
+    const fractionBound = state.targetConc / (state.targetConc + state.kd);
+    const currentShift = fractionBound * state.zCharge * screeningFactor * BASE_MULTIPLIER;
+    return { debyeLength, screeningFactor, fractionBound, currentShift };
+}
+
+// ──────────── UI Elements ────────────
+const slIonic = document.getElementById('sl-ionic');
+const slConc  = document.getElementById('sl-conc');
+const slKd    = document.getElementById('sl-kd');
+const slZ     = document.getElementById('sl-z');
+
+const valIonic = document.getElementById('val-ionic');
+const valConc  = document.getElementById('val-conc');
+const valKd    = document.getElementById('val-kd');
+const valZ     = document.getElementById('val-z');
+
+const metricDebye     = document.getElementById('metric-debye');
+const metricScreening = document.getElementById('metric-screening');
+const metricOccupancy = document.getElementById('metric-occupancy');
+const currentShiftEl  = document.getElementById('current-shift-val');
+
+const btnNano = document.getElementById('btn-nano');
+const btnAnti = document.getElementById('btn-anti');
+
+// ──────────── Slider Events ────────────
+slIonic.addEventListener('input', () => {
+    state.ionicStrength = parseFloat(slIonic.value);
+    valIonic.textContent = state.ionicStrength;
+    updateMetrics();
+});
+
+slConc.addEventListener('input', () => {
+    state.targetConc = logToVal(parseFloat(slConc.value), 0.1, 5000);
+    valConc.textContent = state.targetConc < 10 ? state.targetConc.toFixed(1) : Math.round(state.targetConc);
+    updateMetrics();
+});
+
+slKd.addEventListener('input', () => {
+    state.kd = logToVal(parseFloat(slKd.value), 10, 10000);
+    valKd.textContent = Math.round(state.kd);
+    updateMetrics();
+});
+
+slZ.addEventListener('input', () => {
+    state.zCharge = parseInt(slZ.value);
+    valZ.textContent = state.zCharge;
+    updateMetrics();
+});
+
+// Set initial slider positions for log-scale sliders
+slConc.value = Math.round(valToLog(0.5, 0.1, 5000));
+slKd.value   = Math.round(valToLog(1000, 10, 10000));
+
+// Receptor toggle
+btnNano.addEventListener('click', () => {
+    state.distance = 3;
+    btnNano.classList.add('active');
+    btnAnti.classList.remove('active');
+    updateMetrics();
+});
+btnAnti.addEventListener('click', () => {
+    state.distance = 12;
+    btnAnti.classList.add('active');
+    btnNano.classList.remove('active');
+    updateMetrics();
+});
+
+let results = compute();
+
+function updateMetrics() {
+    results = compute();
+    metricDebye.textContent     = results.debyeLength.toFixed(2) + ' nm';
+    metricScreening.textContent = (results.screeningFactor * 100).toFixed(1) + '%';
+    metricOccupancy.textContent = (results.fractionBound * 100).toFixed(2) + '%';
+    currentShiftEl.textContent  = results.currentShift.toFixed(1) + ' nA';
+
+    // Update bound receptors
+    assignBoundReceptors();
+}
+
+// ──────────── Canvas Setup ────────────
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let W, H, dpr;
+
+function resizeCanvas() {
+    const wrapper = canvas.parentElement;
+    W = wrapper.clientWidth;
+    H = 420;
+    dpr = window.devicePixelRatio || 1;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+// ──────────── Particles (floating target molecules & ions) ────────────
+const particles = [];
+const NUM_PARTICLES = 22;
+
+for (let i = 0; i < NUM_PARTICLES; i++) {
+    particles.push({
+        x: Math.random() * 960,
+        y: 20 + Math.random() * 320,
+        r: 3 + Math.random() * 5,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: (Math.random() - 0.5) * 0.4,
+        alpha: 0.2 + Math.random() * 0.35
+    });
+}
+
+function updateParticles() {
+    const surfaceY = H - 8;
+    for (const p of particles) {
+        p.vx += (Math.random() - 0.5) * 0.06;
+        p.vy += (Math.random() - 0.5) * 0.06;
+        p.vx *= 0.993;
+        p.vy *= 0.993;
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < -15) p.x = W + 10;
+        if (p.x > W + 15) p.x = -10;
+        if (p.y < 8) p.vy = Math.abs(p.vy) * 0.8;
+        if (p.y > surfaceY - 40) p.vy = -Math.abs(p.vy) * 0.8;
+    }
+}
+
+function drawParticles() {
+    for (const p of particles) {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(170, 175, 185, ${p.alpha})`;
+        ctx.fill();
+    }
+}
+
+// ──────────── Receptors ────────────
+const NUM_RECEPTORS = 10;
+const receptors = [];
+
+for (let i = 0; i < NUM_RECEPTORS; i++) {
+    receptors.push({
+        bound: false,
+        targetBound: false,   // smooth transition target
+        boundAnim: 0,         // 0 = unbound, 1 = fully bound (animated)
+        waveOffset: Math.random() * 100
+    });
+}
+
+function assignBoundReceptors() {
+    const theta = results.fractionBound;
+    // Visual scaling: show at least 1 bound for any non-zero theta
+    let numBound;
+    if (theta <= 0) {
+        numBound = 0;
+    } else {
+        numBound = Math.max(1, Math.min(NUM_RECEPTORS - 1,
+            Math.round(2 + 7 * Math.pow(Math.min(theta * 20, 1), 0.35))
+        ));
+    }
+
+    // Randomly pick which ones are bound (change assignment)
+    const indices = [];
+    for (let i = 0; i < NUM_RECEPTORS; i++) indices.push(i);
+    // Shuffle
+    for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    for (let i = 0; i < NUM_RECEPTORS; i++) {
+        receptors[i].targetBound = i < numBound ? true : false;
+    }
+    // Remap to shuffled positions
+    const boundSet = new Set(indices.slice(0, numBound));
+    for (let i = 0; i < NUM_RECEPTORS; i++) {
+        receptors[i].targetBound = boundSet.has(i);
+    }
+}
+
+// Periodically reassign bound state for visual dynamism
+setInterval(assignBoundReceptors, 3500);
+assignBoundReceptors();
+
+function drawReceptors(time) {
+    const surfaceY = H - 8;
+    const nmScale = state.distance <= 3 ? 22 : 18;
+    const receptorPx = state.distance * nmScale;
+    const debyePx = results.debyeLength * nmScale;
+    const spacing = W / (NUM_RECEPTORS + 1);
+
+    // ── Screening gradient (blue haze near surface) ──
+    const gradH = Math.max(debyePx * 3, 50);
+    const grad = ctx.createLinearGradient(0, surfaceY, 0, surfaceY - gradH);
+    grad.addColorStop(0, 'rgba(175, 200, 235, 0.45)');
+    grad.addColorStop(0.4, 'rgba(195, 215, 240, 0.18)');
+    grad.addColorStop(1, 'rgba(210, 225, 245, 0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, surfaceY - gradH, W, gradH);
+
+    // ── Debye length dashed line ──
+    const debyeY = surfaceY - debyePx;
+    ctx.setLineDash([7, 5]);
+    ctx.beginPath();
+    ctx.moveTo(30, debyeY);
+    ctx.lineTo(W - 10, debyeY);
+    ctx.strokeStyle = 'rgba(140, 155, 175, 0.55)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Debye label
+    ctx.font = '12px "SF Mono", Menlo, Consolas, monospace';
+    ctx.fillStyle = 'rgba(110, 120, 140, 0.75)';
+    ctx.textAlign = 'right';
+    ctx.fillText(`λD ≈ ${results.debyeLength.toFixed(1)} nm`, W - 15, debyeY - 6);
+    ctx.textAlign = 'left';
+
+    // ── Surface line ──
+    ctx.beginPath();
+    ctx.moveTo(0, surfaceY);
+    ctx.lineTo(W, surfaceY);
+    ctx.strokeStyle = '#999';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // ── Draw each receptor ──
+    for (let i = 0; i < NUM_RECEPTORS; i++) {
+        const r = receptors[i];
+        const x = spacing * (i + 1);
+        const tipY = surfaceY - receptorPx;
+
+        // Smooth bound animation
+        if (r.targetBound && r.boundAnim < 1) r.boundAnim = Math.min(1, r.boundAnim + 0.025);
+        if (!r.targetBound && r.boundAnim > 0) r.boundAnim = Math.max(0, r.boundAnim - 0.025);
+
+        // Stem
+        ctx.beginPath();
+        ctx.moveTo(x, surfaceY);
+        ctx.lineTo(x, tipY);
+        ctx.strokeStyle = '#3a6fd8';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        const ba = r.boundAnim; // 0..1
+
+        // Tip circle (interpolate size)
+        const minR = 3.5;
+        const maxR = 10;
+        const tipR = minR + (maxR - minR) * ba;
+
+        // Outer ring
+        if (ba > 0.1) {
+            ctx.beginPath();
+            ctx.arc(x, tipY, tipR + 6 * ba, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(210, 170, 60, ${0.25 * ba})`;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+
+        // Filled circle
+        const cR = Math.round(200 + 20 * ba);
+        const cG = Math.round(160 + 10 * (1 - ba));
+        const cB = Math.round(50 + 30 * (1 - ba));
+        ctx.beginPath();
+        ctx.arc(x, tipY, tipR, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${cR}, ${cG}, ${cB}, ${0.65 + 0.35 * ba})`;
+        ctx.fill();
+
+        // Signal waves
+        const waveCount = ba > 0.5 ? 2 : 2;
+        const waveSpeed = 0.45 + 0.3 * ba;
+        const waveMaxR = 18 + 18 * ba;
+        const waveAlphaBase = 0.15 + 0.45 * ba;
+
+        for (let w = 0; w < waveCount; w++) {
+            const phase = ((time * waveSpeed + w * (waveMaxR / waveCount) + r.waveOffset * 30) % waveMaxR);
+            const waveR = tipR + 3 + phase;
+            const alpha = waveAlphaBase * (1 - phase / waveMaxR);
+
+            if (alpha > 0.02) {
+                ctx.lineWidth = 1.2 + 0.5 * ba;
+
+                // Left arc
+                ctx.beginPath();
+                ctx.arc(x, tipY, waveR, Math.PI * 0.6, Math.PI * 1.4);
+                ctx.strokeStyle = `rgba(195, 160, 50, ${alpha})`;
+                ctx.stroke();
+
+                // Right arc
+                ctx.beginPath();
+                ctx.arc(x, tipY, waveR, -Math.PI * 0.4, Math.PI * 0.4);
+                ctx.strokeStyle = `rgba(195, 160, 50, ${alpha})`;
+                ctx.stroke();
+            }
+        }
+    }
+
+    // ── "SIGNAL: X% VISIBLE" label ──
+    const signalPct = (results.screeningFactor * 100).toFixed(0);
+    const labelText = `SIGNAL: ${signalPct}% VISIBLE`;
+    ctx.font = '600 13px -apple-system, BlinkMacSystemFont, sans-serif';
+    const tw = ctx.measureText(labelText).width;
+    const lx = W / 2;
+    const ly = surfaceY - receptorPx - 35;
+    const pad = 12;
+    const boxW = tw + pad * 2;
+    const boxH = 28;
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.88)';
+    ctx.strokeStyle = '#d0a030';
+    ctx.lineWidth = 1.5;
+
+    // Rounded rect
+    const bx = lx - boxW / 2, by = ly - boxH / 2, br = 6;
+    ctx.beginPath();
+    ctx.moveTo(bx + br, by);
+    ctx.lineTo(bx + boxW - br, by);
+    ctx.quadraticCurveTo(bx + boxW, by, bx + boxW, by + br);
+    ctx.lineTo(bx + boxW, by + boxH - br);
+    ctx.quadraticCurveTo(bx + boxW, by + boxH, bx + boxW - br, by + boxH);
+    ctx.lineTo(bx + br, by + boxH);
+    ctx.quadraticCurveTo(bx, by + boxH, bx, by + boxH - br);
+    ctx.lineTo(bx, by + br);
+    ctx.quadraticCurveTo(bx, by, bx + br, by);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#555';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(labelText, lx, ly);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+}
+
+// ──────────── Animation Loop ────────────
+let frame = 0;
+
+function animate() {
+    ctx.clearRect(0, 0, W, H);
+    updateParticles();
+    drawParticles();
+    drawReceptors(frame);
+    frame++;
+    requestAnimationFrame(animate);
+}
+
+// Init
+updateMetrics();
+animate();
+</script>
+
+</body>
+</html>
