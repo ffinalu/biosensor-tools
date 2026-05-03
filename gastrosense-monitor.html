@@ -165,89 +165,103 @@ body {
 .ws-unit { font-size: .78em; color: #5a6577; font-weight: 400; margin-left: 3px; }
 
 /* ── Mid row grid ── */
-.mid-row { display: grid; grid-template-columns: 230px 1fr; gap: 10px; }
+.mid-row { display: grid; grid-template-columns: 260px 1fr; gap: 10px; }
 
-/* ── Pressure (compact) ── */
-.pres-panel { text-align: center; padding: 12px 14px; }
+/* ── Pressure ── */
+.pres-panel { text-align: center; }
 .pres-panel canvas { display: block; margin: 0 auto; }
 .pres-big {
     font-family: 'SF Mono',Menlo,Consolas,monospace;
-    font-size: 2em; font-weight: 700; color: #26c6da; margin: 3px 0 1px;
+    font-size: 2.5em; font-weight: 700; color: #26c6da; margin: 6px 0 2px;
 }
-.pres-big .u { font-size: .38em; color: #5a6577; font-weight: 400; }
+.pres-big .u { font-size: .36em; color: #5a6577; font-weight: 400; }
 .pres-stats {
-    display: flex; justify-content: center; gap: 12px;
-    font-size: .76em; color: #5a6577; margin-top: 4px;
+    display: flex; justify-content: center; gap: 16px;
+    font-size: .8em; color: #5a6577; margin-top: 6px;
 }
 .pres-stats b { color: #26c6da; font-family: 'SF Mono',monospace; font-weight: 600; }
+.pres-trend { margin-top: 10px; }
+.pres-trend canvas { width: 100%; height: 50px; display: block; border-radius: 4px; }
 
-/* ── VOCs (compact) ── */
-.voc-row { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
+/* ── VOCs ── */
+.voc-row { display: flex; align-items: center; gap: 10px; margin-bottom: 11px; }
 .voc-name { width: 44px; font-size: .85em; font-weight: 700; text-align: right; }
 .voc-track {
-    flex: 1; height: 13px; background: rgba(255,255,255,.04);
-    border-radius: 3px; overflow: hidden;
+    flex: 1; height: 20px; background: rgba(255,255,255,.04);
+    border-radius: 4px; overflow: hidden;
 }
-.voc-fill { height: 100%; border-radius: 3px; transition: width .4s, background .4s; }
+.voc-fill { height: 100%; border-radius: 4px; transition: width .4s, background .4s; }
 .voc-num {
-    width: 72px; text-align: right; font-family: 'SF Mono',monospace;
-    font-size: .84em; font-weight: 600;
+    width: 78px; text-align: right; font-family: 'SF Mono',monospace;
+    font-size: .88em; font-weight: 600;
 }
-.voc-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.voc-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.voc-sub { font-size: .7em; color: #4a5568; margin-top: -6px; margin-bottom: 8px; margin-left: 54px; }
 
-/* ══ CLINICAL ASSESSMENT — redesigned ════════════════ */
-
-/* Headline */
-.assess-headline {
-    display: flex; align-items: center; gap: 16px;
-    border-radius: 10px; padding: 14px 18px; margin-bottom: 10px;
-    border-left: 5px solid transparent;
+/* ══ CLINICAL ASSESSMENT ═════════════════════════ */
+.impression-bar {
+    display: flex; align-items: center; gap: 14px;
+    background: #0d1520;
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 10px;
+    padding: 11px 16px;
+    margin-bottom: 10px;
 }
-.assess-headline.ok  { background: rgba(0,230,118,.07);  border-left-color: #00e676; }
-.assess-headline.wrn { background: rgba(255,167,38,.07);  border-left-color: #ffa726; }
-.assess-headline.bad { background: rgba(239,83,80,.08);   border-left-color: #ef5350; }
-.hl-icon { font-size: 2em; flex-shrink: 0; line-height: 1; }
-.hl-body { flex: 1; }
-.hl-main { font-size: 1.1em; font-weight: 700; color: #e8ecf4; margin-bottom: 3px; }
-.hl-sub  { font-size: .82em; color: #7a8599; }
-.hl-sub strong { color: #b8c7da; }
-.hl-next {
-    font-size: .75em; color: #5a6577;
-    background: rgba(255,255,255,.05); border-radius: 7px;
-    padding: 6px 12px; white-space: nowrap; text-align: center; flex-shrink: 0;
-    line-height: 1.5;
+.imp-label {
+    font-size: .62em; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.4px; color: #3d4e62; white-space: nowrap;
 }
-.hl-next strong { display: block; color: #8a9bb0; font-size: 1.05em; margin-bottom: 1px; }
+.imp-text { flex: 1; font-size: .87em; color: #b0bbd0; line-height: 1.5; }
+.imp-badge {
+    font-size: .71em; font-weight: 700; padding: 3px 11px;
+    border-radius: 20px; white-space: nowrap; flex-shrink: 0;
+}
+.imp-badge.ok  { background: rgba(0,230,118,.13);  color: #00e676; }
+.imp-badge.wrn { background: rgba(255,167,38,.13);  color: #ffa726; }
+.imp-badge.bad { background: rgba(239,83,80,.13);   color: #ef5350; }
 
-/* 4 indicator rows */
-.assess-rows { display: flex; flex-direction: column; gap: 6px; }
-.ar {
+.assess-grid {
     display: grid;
-    grid-template-columns: 140px 100px 100px 1fr;
-    align-items: center; gap: 12px;
-    background: #0d1520; border-radius: 8px;
-    padding: 9px 14px;
-    border-left: 3px solid transparent;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
 }
-.ar.ok  { border-left-color: #00e676; }
-.ar.wrn { border-left-color: #ffa726; }
-.ar.bad { border-left-color: #ef5350; }
-.ar-name {
-    font-size: .68em; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 1px; color: #4a5568;
+.a-card {
+    background: #0d1520;
+    border: 1px solid rgba(255,255,255,.06);
+    border-top: 3px solid transparent;
+    border-radius: 10px;
+    padding: 13px 15px 14px;
 }
-.ar-status {
-    font-size: .78em; font-weight: 700; padding: 2px 10px;
-    border-radius: 20px; text-align: center; white-space: nowrap;
+.a-card.ok  { border-top-color: #00e676; }
+.a-card.wrn { border-top-color: #ffa726; }
+.a-card.bad { border-top-color: #ef5350; }
+.a-component {
+    font-size: .60em; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.4px; color: #3d4e62; margin-bottom: 7px;
 }
-.ar-status.ok  { background: rgba(0,230,118,.13);  color: #00e676; }
-.ar-status.wrn { background: rgba(255,167,38,.13);  color: #ffa726; }
-.ar-status.bad { background: rgba(239,83,80,.13);   color: #ef5350; }
-.ar-value {
+.a-status-row { display: flex; align-items: center; gap: 7px; margin-bottom: 9px; }
+.a-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.a-dot.ok  { background: #00e676; box-shadow: 0 0 5px #00e67688; }
+.a-dot.wrn { background: #ffa726; box-shadow: 0 0 5px #ffa72688; }
+.a-dot.bad { background: #ef5350; box-shadow: 0 0 5px #ef535088; }
+.a-status-label { font-size: .72em; font-weight: 700; }
+.a-status-label.ok  { color: #00e676; }
+.a-status-label.wrn { color: #ffa726; }
+.a-status-label.bad { color: #ef5350; }
+.a-metric {
     font-family: 'SF Mono',Menlo,monospace;
-    font-size: .84em; font-weight: 700; color: #8a9bb0;
+    font-size: 1.0em; font-weight: 700; color: #dce4f0;
+    margin-bottom: 7px; line-height: 1.3;
 }
-.ar-plain { font-size: .82em; color: #6a7a90; line-height: 1.4; }
+.a-finding { font-size: .76em; color: #6a7a90; line-height: 1.55; margin-bottom: 9px; }
+.a-disease {
+    display: flex; align-items: flex-start; gap: 6px;
+    background: rgba(255,255,255,.035); border-radius: 6px; padding: 6px 9px;
+    font-size: .72em; line-height: 1.45;
+}
+.a-disease-icon { font-size: 1em; flex-shrink: 0; margin-top: 1px; }
+.a-disease-text { color: #8a9bb0; }
+.a-disease-text strong { color: #b8c7da; }
 
 /* ── Disclaimer ── */
 .disclaimer {
@@ -353,11 +367,12 @@ body {
         <div class="mid-row">
             <div class="panel pres-panel">
                 <div class="p-label">Intragastric Pressure <span class="p-cyan">&#9679;</span></div>
-                <canvas id="gaugeC" width="200" height="118"></canvas>
+                <canvas id="gaugeC" width="240" height="145"></canvas>
                 <div class="pres-big"><span id="p-val">6.0</span> <span class="u">mmHg</span></div>
                 <div class="pres-stats">
                     Min <b id="p-min">5.1</b>&ensp;Max <b id="p-max">7.8</b>&ensp;Avg <b id="p-avg">6.2</b>
                 </div>
+                <div class="pres-trend"><canvas id="trendC"></canvas></div>
             </div>
 
             <div class="panel">
@@ -369,15 +384,12 @@ body {
         <!-- ── CLINICAL ASSESSMENT ── -->
         <div class="panel">
             <div class="p-label">Clinical Assessment &amp; Interpretation</div>
-            <div class="assess-headline ok" id="assess-headline">
-                <div class="hl-icon" id="hl-icon">✓</div>
-                <div class="hl-body">
-                    <div class="hl-main" id="hl-main">Everything looks normal</div>
-                    <div class="hl-sub" id="hl-sub">No signs of disease detected</div>
-                </div>
-                <div class="hl-next" id="hl-next"><strong>Next step</strong>Routine monitoring</div>
+            <div class="impression-bar">
+                <span class="imp-label">Primary Impression</span>
+                <span class="imp-text" id="imp-text">Integrating sensor data&hellip;</span>
+                <span class="imp-badge ok" id="imp-badge">Nominal</span>
             </div>
-            <div class="assess-rows" id="assess-rows"></div>
+            <div class="assess-grid" id="assess-grid"></div>
         </div>
 
         <div class="disclaimer">
@@ -455,7 +467,7 @@ function selectScenario(btn) {
     document.getElementById('active-label').textContent = s.label;
 }
 
-/* ── Build VOC HTML (compact — no subtitle rows) ── */
+/* ── Build VOC HTML ── */
 (function(){
     let h = '';
     for (const [k,c] of Object.entries(VOC_CFG)) {
@@ -464,7 +476,8 @@ function selectScenario(btn) {
             <div class="voc-track"><div class="voc-fill" id="vf-${k}"></div></div>
             <span class="voc-num" id="vn-${k}">—</span>
             <div class="voc-dot" id="vd-${k}"></div>
-        </div>`;
+        </div>
+        <div class="voc-sub">${c.full} — ${c.note} &ensp;(normal &lt;${c.gTh} ${c.unit})</div>`;
     }
     document.getElementById('voc-box').innerHTML = h;
 })();
@@ -483,11 +496,16 @@ function sizeCanvas(canvas, h) {
 }
 function sizeGauge() {
     const d = devicePixelRatio||1;
-    gC.width=200*d; gC.height=118*d; gC.style.width='200px'; gC.style.height='118px';
+    gC.width=240*d; gC.height=145*d; gC.style.width='240px'; gC.style.height='145px';
     gX.setTransform(d,0,0,d,0,0);
 }
-sizeCanvas(wC,195); sizeCanvas(eC,165); sizeGauge();
-window.addEventListener('resize', () => { sizeCanvas(wC,195); sizeCanvas(eC,165); });
+function sizeTrend() {
+    const w=tC.parentElement.clientWidth-4, h=48, d=devicePixelRatio||1;
+    tC.width=w*d; tC.height=h*d; tC.style.width=w+'px'; tC.style.height=h+'px';
+    tX.setTransform(d,0,0,d,0,0);
+}
+sizeCanvas(wC,195); sizeCanvas(eC,165); sizeGauge(); sizeTrend();
+window.addEventListener('resize', () => { sizeCanvas(wC,195); sizeCanvas(eC,165); sizeTrend(); });
 
 /* ══ SIGNAL GENERATORS ══════════════════════════════════════════════ */
 function cShape(ph) {
@@ -580,33 +598,47 @@ function drawEGG() {
     eX.stroke(); eX.shadowBlur=0;
 }
 
-/* ══ DRAW: PRESSURE GAUGE (compact 200×118) ═════════════════════════ */
+/* ══ DRAW: PRESSURE GAUGE ═══════════════════════════════════════════ */
 function drawGauge(pv) {
-    const W=200,H=118; gX.clearRect(0,0,W,H);
-    const cx=W/2,cy=H-8,r=68,maxP=40;
+    const W=240,H=145; gX.clearRect(0,0,W,H);
+    const cx=W/2,cy=H-12,r=85,maxP=40;
     const a4v=v=>Math.PI-(v/maxP)*Math.PI;
-    gX.lineWidth=10;
+    gX.lineWidth=13;
     [[0,10,'rgba(0,230,118,.22)'],[10,20,'rgba(255,167,38,.22)'],[20,40,'rgba(239,83,80,.22)']].forEach(([lo,hi,c])=>{
         gX.beginPath(); gX.arc(cx,cy,r,a4v(hi),a4v(lo)); gX.strokeStyle=c; gX.stroke();
     });
-    for(let v=0;v<=maxP;v+=10){
-        const a=a4v(v);
+    for(let v=0;v<=maxP;v+=5){
+        const a=a4v(v),major=v%10===0;
         gX.beginPath();
-        gX.moveTo(cx+Math.cos(a)*(r-5),cy-Math.sin(a)*(r-5));
-        gX.lineTo(cx+Math.cos(a)*(r+5),cy-Math.sin(a)*(r+5));
-        gX.strokeStyle='rgba(255,255,255,.28)'; gX.lineWidth=1.5; gX.stroke();
-        gX.font='8px SF Mono,monospace'; gX.fillStyle='#4a5568';
-        gX.textAlign='center'; gX.textBaseline='middle';
-        gX.fillText(v,cx+Math.cos(a)*(r+14),cy-Math.sin(a)*(r+14));
+        gX.moveTo(cx+Math.cos(a)*(r-6),cy-Math.sin(a)*(r-6));
+        gX.lineTo(cx+Math.cos(a)*(r+6),cy-Math.sin(a)*(r+6));
+        gX.strokeStyle=major?'rgba(255,255,255,.28)':'rgba(255,255,255,.1)';
+        gX.lineWidth=major?1.5:1; gX.stroke();
+        if(major){ gX.font='9px SF Mono,monospace'; gX.fillStyle='#4a5568';
+            gX.textAlign='center'; gX.textBaseline='middle';
+            gX.fillText(v,cx+Math.cos(a)*(r+17),cy-Math.sin(a)*(r+17)); }
     }
     const cl=Math.max(0,Math.min(maxP,pv)),na=a4v(cl);
     gX.shadowColor='#26c6da'; gX.shadowBlur=5;
-    gX.strokeStyle='#26c6da'; gX.lineWidth=2.2;
+    gX.strokeStyle='#26c6da'; gX.lineWidth=2.5;
     gX.beginPath(); gX.moveTo(cx,cy);
-    gX.lineTo(cx+Math.cos(na)*(r-16),cy-Math.sin(na)*(r-16));
+    gX.lineTo(cx+Math.cos(na)*(r-20),cy-Math.sin(na)*(r-20));
     gX.stroke(); gX.shadowBlur=0;
-    gX.beginPath(); gX.arc(cx,cy,3,0,Math.PI*2);
+    gX.beginPath(); gX.arc(cx,cy,3.5,0,Math.PI*2);
     gX.fillStyle='#26c6da'; gX.fill();
+}
+function drawTrend() {
+    const w=tC.width/(devicePixelRatio||1),h=tC.height/(devicePixelRatio||1);
+    tX.clearRect(0,0,w,h);
+    if(presBuf.length<3) return;
+    const mn=Math.min(...presBuf)-.5,mx=Math.max(...presBuf)+.5,range=Math.max(mx-mn,1);
+    tX.strokeStyle='rgba(38,198,218,.5)'; tX.lineWidth=1.2;
+    tX.beginPath();
+    for(let i=0;i<presBuf.length;i++){
+        const x=(i/PLEN)*w,y=h-((presBuf[i]-mn)/range)*h;
+        i===0?tX.moveTo(x,y):tX.lineTo(x,y);
+    }
+    tX.stroke();
 }
 
 /* ══ VOC UPDATE ═════════════════════════════════════════════════════ */
@@ -649,89 +681,144 @@ function updateEGGStats() {
     else{           stEl.textContent='Normal';        stEl.style.color='#ce93d8'; }
 }
 
-/* ══ CLINICAL ASSESSMENT — plain English for doctor + patient ════════ */
-const HEADLINES = {
-    normal:               { sev:'ok',  icon:'✓', main:'Everything looks normal',                          sub:'No signs of disease detected',                                    next:'Routine monitoring' },
-    functional_dyspepsia: { sev:'wrn', icon:'⚠', main:'Stomach rhythm is too fast',                       sub:'Likely cause: <strong>Functional Dyspepsia</strong>',             next:'Dietary review &amp; motility tests' },
-    gastroparesis:        { sev:'bad', icon:'!',  main:'Stomach is not emptying properly',                 sub:'Likely cause: <strong>Gastroparesis</strong>',                    next:'Gastric emptying scan needed' },
-    sibo:                 { sev:'bad', icon:'!',  main:'Too many bacteria detected in the gut',           sub:'Likely cause: <strong>SIBO</strong> (Bacterial Overgrowth)',       next:'Breath test &amp; antibiotic review' },
+/* ══ CLINICAL ASSESSMENT ════════════════════════════════════════════ */
+const IMPRESSIONS = {
+    normal:               ['ok',  'All parameters within normal limits. Regular MMC Phase II slow-wave pacing at 3 CPM. No evidence of motility disorder or microbial overgrowth.'],
+    functional_dyspepsia: ['wrn', 'Tachygastria with mildly elevated intragastric pressure and reduced contractile variability. Pattern consistent with functional dyspepsia. Consider visceral hypersensitivity workup and low-FODMAP dietary trial.'],
+    gastroparesis:        ['bad', 'Hypomotility with bradygastria and low intragastric pressure. Pattern consistent with gastroparesis. Consider prokinetic therapy and gastric emptying scintigraphy.'],
+    sibo:                 ['bad', 'Markedly elevated H₂ and CH₄. Pattern consistent with small intestinal bacterial overgrowth (SIBO). Recommend lactulose breath test and targeted antibiotic therapy review.']
 };
 
 function updateAssessment() {
     let globalSev = 'ok';
-    const rows = [];
 
-    /* ── Row 1: Contractions ── */
-    let cSev, cVal, cPlain;
+    /* Card 1 — Contractility */
+    let cSev, cMetric, cFinding, cDisease;
     if(live.amp<12){
-        cSev='bad'; cVal=live.amp.toFixed(0)+' mmHg'; cPlain='Stomach muscles are squeezing too weakly to move food'; globalSev='bad';
+        cSev='bad'; cMetric=live.amp.toFixed(0)+' mmHg amplitude';
+        cFinding='Markedly reduced contractile amplitude. Hypomotile peristaltic pattern with low motility index.';
+        cDisease='Gastroparesis'; globalSev='bad';
+    } else if(live.amp>60){
+        cSev='wrn'; cMetric=live.amp.toFixed(0)+' mmHg · '+live.base.toFixed(0)+' mmHg basal';
+        cFinding='Hypercontractile pattern with elevated resting tone.';
+        cDisease='Gastric Outlet Obstruction'; if(globalSev!=='bad') globalSev='wrn';
     } else if(live.freq<1.5){
-        cSev='wrn'; cVal=live.freq.toFixed(1)+' CPM'; cPlain='Contractions are too slow — food is not moving forward'; if(globalSev!=='bad') globalSev='wrn';
+        cSev='wrn'; cMetric=live.freq.toFixed(1)+' CPM · '+live.amp.toFixed(0)+' mmHg';
+        cFinding='Reduced contraction frequency with partially preserved amplitude. Early hypomotility.';
+        cDisease='Gastroparesis (early)'; if(globalSev!=='bad') globalSev='wrn';
     } else if(live.varAmp>0.35 && live.amp<30){
-        cSev='wrn'; cVal=live.amp.toFixed(0)+' mmHg · '+live.freq.toFixed(1)+' CPM'; cPlain='Irregular squeezing — stomach rhythm is uneven'; if(globalSev!=='bad') globalSev='wrn';
+        cSev='wrn'; cMetric=live.amp.toFixed(0)+' mmHg · '+live.freq.toFixed(1)+' CPM';
+        cFinding='Contractility within range but with high amplitude variability, suggesting irregular pacing.';
+        cDisease='Functional Dyspepsia'; if(globalSev!=='bad') globalSev='wrn';
     } else {
-        cSev='ok'; cVal=live.amp.toFixed(0)+' mmHg · '+live.freq.toFixed(1)+' CPM'; cPlain='Stomach contractions are strong and regular';
+        cSev='ok'; cMetric=live.amp.toFixed(0)+' mmHg · '+live.freq.toFixed(1)+' CPM';
+        cFinding='Amplitude and frequency within reference range (15–60 mmHg, 2.5–3.7 CPM).';
+        cDisease='No motility disorder detected';
     }
-    rows.push({name:'Contractions', sev:cSev, val:cVal, plain:cPlain, statusTxt:{ok:'Normal',wrn:'Irregular',bad:'Weak'}[cSev]});
 
-    /* ── Row 2: Stomach rhythm (EGG) ── */
-    let eSev, eVal, ePlain;
+    /* Card 2 — EGG */
+    let eSev, eMetric, eFinding, eDisease;
     const df=live.eggDF, norm=live.eggNorm;
     if(df<2.0){
-        eSev='bad'; eVal=df.toFixed(1)+' CPM'; ePlain='Electrical pacemaker is too slow — stomach cannot coordinate squeezing'; globalSev='bad';
+        eSev='bad'; eMetric=df.toFixed(1)+' CPM · '+live.eggBrady.toFixed(0)+'% bradygastria';
+        eFinding='Bradygastria: slow-wave pacing below 2 CPM reflects impaired ICC pacemaker activity.';
+        eDisease='Gastroparesis'; globalSev='bad';
     } else if(df>4.0){
-        eSev='wrn'; eVal=df.toFixed(1)+' CPM'; ePlain='Electrical signal is too fast — disrupts normal stomach rhythm'; if(globalSev!=='bad') globalSev='wrn';
+        eSev='wrn'; eMetric=df.toFixed(1)+' CPM · '+live.eggTachy.toFixed(0)+'% tachygastria';
+        eFinding='Tachygastria: rapid ectopic pacing disrupts co-ordinated antral contractions and delays emptying.';
+        eDisease='Functional Dyspepsia'; if(globalSev!=='bad') globalSev='wrn';
     } else if(norm<60){
-        eSev='wrn'; eVal=norm.toFixed(0)+'% normal'; ePlain='Stomach electrical rhythm is unstable'; if(globalSev!=='bad') globalSev='wrn';
+        eSev='wrn'; eMetric=df.toFixed(1)+' CPM · '+norm.toFixed(0)+'% normogastria';
+        eFinding='Mixed dysrhythmia. Normogastria power below 60% — unstable slow-wave pacing.';
+        eDisease='Gastric Dysrhythmia'; if(globalSev!=='bad') globalSev='wrn';
     } else {
-        eSev='ok'; eVal=df.toFixed(1)+' CPM'; ePlain='Stomach electrical rhythm is steady and normal';
+        eSev='ok'; eMetric=df.toFixed(1)+' CPM · '+norm.toFixed(0)+'% normogastria';
+        eFinding='Regular 3 CPM slow-wave pacing. Normogastria dominant power within normal range.';
+        eDisease='Normal EGG rhythm';
     }
-    rows.push({name:'Stomach Rhythm (EGG)', sev:eSev, val:eVal, plain:ePlain, statusTxt:{ok:'Normal',wrn:'Off-rhythm',bad:'Abnormal'}[eSev]});
 
-    /* ── Row 3: Pressure ── */
-    let pSev, pVal, pPlain;
+    /* Card 3 — Pressure */
+    let pSev, pMetric, pFinding, pDisease;
     if(live.pMu>25){
-        pSev='bad'; pVal=live.pMu.toFixed(0)+' mmHg'; pPlain='Pressure is very high — something may be blocking the stomach outlet'; globalSev='bad';
+        pSev='bad'; pMetric=live.pMu.toFixed(0)+' mmHg';
+        pFinding='Markedly elevated intragastric pressure. Outflow obstruction likely.';
+        pDisease='Gastric Outlet Obstruction'; globalSev='bad';
     } else if(live.pMu>10){
-        pSev='wrn'; pVal=live.pMu.toFixed(1)+' mmHg'; pPlain='Stomach pressure is slightly high — may cause bloating or discomfort'; if(globalSev!=='bad') globalSev='wrn';
+        pSev='wrn'; pMetric=live.pMu.toFixed(1)+' mmHg';
+        pFinding='Mildly elevated pressure. May reflect increased visceral sensitivity or delayed gastric accommodation.';
+        pDisease='Functional Dyspepsia'; if(globalSev!=='bad') globalSev='wrn';
     } else if(live.pMu<3){
-        pSev='wrn'; pVal=live.pMu.toFixed(1)+' mmHg'; pPlain='Pressure is very low — stomach wall is not maintaining normal tone'; if(globalSev!=='bad') globalSev='wrn';
+        pSev='wrn'; pMetric=live.pMu.toFixed(1)+' mmHg';
+        pFinding='Low intragastric pressure. Atonic gastric wall consistent with severe hypomotility.';
+        pDisease='Gastroparesis (gastric atony)'; if(globalSev!=='bad') globalSev='wrn';
     } else {
-        pSev='ok'; pVal=live.pMu.toFixed(1)+' mmHg'; pPlain='Stomach pressure is in the normal range';
+        pSev='ok'; pMetric=live.pMu.toFixed(1)+' mmHg';
+        pFinding='Intragastric pressure within normal fasting reference range (5–10 mmHg).';
+        pDisease='No pressure abnormality';
     }
-    rows.push({name:'Internal Pressure', sev:pSev, val:pVal, plain:pPlain, statusTxt:{ok:'Normal',wrn:'Elevated',bad:'High'}[pSev]});
 
-    /* ── Row 4: Gut gases ── */
-    let vSev, vVal, vPlain;
-    const h2High=live.h2>20, ch4High=live.ch4>10, h2Warn=live.h2>10, ch4Warn=live.ch4>3;
+    /* Card 4 — VOC */
+    let vSev, vMetric, vFinding, vDisease;
+    const h2High=live.h2>20, h2Warn=live.h2>10;
+    const ch4High=live.ch4>10, ch4Warn=live.ch4>3;
+    const nh3High=live.nh3>15, nh3Warn=live.nh3>5;
+    const h2sWarn=live.h2s>1;
     if(h2High||ch4High){
         vSev='bad';
-        const p=[]; if(h2High) p.push('H₂ '+live.h2.toFixed(0)+'ppm'); if(ch4High) p.push('CH₄ '+live.ch4.toFixed(0)+'ppm');
-        vVal=p.join(', '); vPlain='Too many bacteria in the gut — they are producing excess gas'; globalSev='bad';
-    } else if(h2Warn||ch4Warn||live.nh3>5||live.h2s>1){
-        vSev='wrn'; vVal='Borderline'; vPlain='Gas levels slightly above normal — watch for worsening symptoms'; if(globalSev!=='bad') globalSev='wrn';
+        const parts=[];
+        if(h2High) parts.push('H₂ '+live.h2.toFixed(0)+' ppm');
+        if(ch4High) parts.push('CH₄ '+live.ch4.toFixed(0)+' ppm');
+        vMetric=parts.join(' · ');
+        vFinding='Fermentative gases markedly elevated. Co-elevation of H₂ and CH₄ indicates carbohydrate malabsorption with microbial overgrowth.';
+        vDisease='SIBO (Small Intestinal Bacterial Overgrowth)'; globalSev='bad';
+    } else if(h2Warn||ch4Warn||nh3Warn||h2sWarn){
+        vSev='wrn';
+        const parts=[];
+        if(h2Warn) parts.push('H₂ '+live.h2.toFixed(0));
+        if(ch4Warn) parts.push('CH₄ '+live.ch4.toFixed(1));
+        if(nh3Warn) parts.push('NH₃ '+live.nh3.toFixed(1));
+        if(h2sWarn) parts.push('H₂S ↑');
+        vMetric='Borderline elevation';
+        vFinding=parts.join(', ')+' ppm — borderline. Serial monitoring advised.';
+        vDisease='Monitor: early SIBO risk'; if(globalSev!=='bad') globalSev='wrn';
     } else {
-        vSev='ok'; vVal='All normal'; vPlain='No excess bacteria or gut gas detected';
+        vSev='ok'; vMetric='All gases within normal limits';
+        vFinding='No fermentative gas above threshold. Microbial gas profile normal.';
+        vDisease='No microbial overgrowth detected';
     }
-    rows.push({name:'Gut Gases (VOC)', sev:vSev, val:vVal, plain:vPlain, statusTxt:{ok:'Normal',wrn:'Borderline',bad:'Elevated'}[vSev]});
 
-    /* ── Render headline ── */
-    const hl = HEADLINES[currentScenario] || HEADLINES.normal;
-    const hlEl = document.getElementById('assess-headline');
-    hlEl.className = 'assess-headline ' + globalSev;
-    document.getElementById('hl-icon').textContent = hl.icon;
-    document.getElementById('hl-main').textContent = hl.main;
-    document.getElementById('hl-sub').innerHTML = hl.sub;
-    document.getElementById('hl-next').innerHTML = '<strong>Next step</strong>' + hl.next;
-
-    /* ── Render 4 rows ── */
-    document.getElementById('assess-rows').innerHTML = rows.map(r=>`
-        <div class="ar ${r.sev}">
-            <span class="ar-name">${r.name}</span>
-            <span class="ar-status ${r.sev}">${r.statusTxt}</span>
-            <span class="ar-value">${r.val}</span>
-            <span class="ar-plain">${r.plain}</span>
+    /* Render cards */
+    const cards=[
+        {comp:'Contractility',        sev:cSev,metric:cMetric,finding:cFinding,disease:cDisease},
+        {comp:'Slow Waves — EGG', sev:eSev,metric:eMetric,finding:eFinding,disease:eDisease},
+        {comp:'Intragastric Pressure',sev:pSev,metric:pMetric,finding:pFinding,disease:pDisease},
+        {comp:'VOC Profile',          sev:vSev,metric:vMetric,finding:vFinding,disease:vDisease},
+    ];
+    const sl={ok:'Normal',wrn:'Attention',bad:'Abnormal'};
+    const si={ok:'✓',wrn:'⚠',bad:'✗'};
+    const dc={ok:'#00e676',wrn:'#ffa726',bad:'#ef5350'};
+    const di={ok:'○',wrn:'◇',bad:'◆'};
+    document.getElementById('assess-grid').innerHTML=cards.map(c=>`
+        <div class="a-card ${c.sev}">
+            <div class="a-component">${c.comp}</div>
+            <div class="a-status-row">
+                <div class="a-dot ${c.sev}"></div>
+                <span class="a-status-label ${c.sev}">${si[c.sev]} ${sl[c.sev]}</span>
+            </div>
+            <div class="a-metric">${c.metric}</div>
+            <div class="a-finding">${c.finding}</div>
+            <div class="a-disease">
+                <span class="a-disease-icon" style="color:${dc[c.sev]}">${di[c.sev]}</span>
+                <span class="a-disease-text"><strong>${c.disease}</strong></span>
+            </div>
         </div>`).join('');
+
+    /* Primary impression */
+    const [impSev,impText]=IMPRESSIONS[currentScenario]||['ok','Integrating sensor data…'];
+    document.getElementById('imp-text').textContent=impText;
+    const badge=document.getElementById('imp-badge');
+    badge.className='imp-badge '+globalSev;
+    badge.textContent={ok:'All Normal',wrn:'Attention Required',bad:'Abnormal'}[globalSev];
 }
 
 /* ── Clock ── */
