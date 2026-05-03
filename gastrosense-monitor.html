@@ -110,11 +110,16 @@ body {
     flex-wrap: wrap;
     gap: 10px;
 }
-.device-id { display: flex; align-items: center; gap: 10px; }
-.rec { width: 9px; height: 9px; background: #ef5350; border-radius: 50%;
-       animation: pulse 1.4s ease-in-out infinite; }
+.device-id { display: flex; align-items: center; gap: 14px; }
+.rec { width: 11px; height: 11px; background: #ef5350; border-radius: 50%;
+       animation: pulse 1.4s ease-in-out infinite; flex-shrink: 0; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.25} }
-.device-id strong { font-size: 1.25em; color: #e8ecf4; }
+.device-id strong {
+    font-size: 2em;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -.5px;
+}
 .tag {
     font-size: .78em; color: #6a7588;
     border: 1px solid rgba(255,255,255,.08);
